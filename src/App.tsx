@@ -4,15 +4,17 @@
 
 import { useState, useEffect } from "react";
 import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
-import { BitmapLayer } from "@deck.gl/layers";
 import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-import type { TypedArray, NumberDataType } from "zarrita";
 
 import ZarrReader from "./zarr";
-import TestLayer from "./TestBitmapLayer";
+import NumericDataLayer from "./NumericDataLayer";
+import { numberArrayToUint8ClampedArray } from "./zarr/utils";
+
+import ColormapDropdown from "./UI/Dropdown";
+
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
 
@@ -20,6 +22,7 @@ const INITIAL_VIEW_STATE = {
   latitude: 51.47,
   longitude: 0.45,
   zoom: 0,
+  maxZoom: 1,
 };
 
 const MAP_STYLE =
@@ -40,39 +43,6 @@ function DeckGLOverlay(props) {
   const overlay = useControl(() => new DeckOverlay(props));
   overlay.setProps(props);
   return null;
-}
-
-// Helper function to map a single value from [minInput, maxInput] to [0, 255]
-function numberArrayToUint8ClampedArray(
-  arr: TypedArray<NumberDataType>,
-  minVal: number,
-  maxVal: number
-) {
-  const visualResult = new Uint8ClampedArray(arr.length * 4);
-
-  for (let i = 0; i < arr.length; i++) {
-    const dv = arr[i];
-    const offset = i * 4;
-
-    if (isNaN(dv)) {
-      // nodata value
-      visualResult[offset] = 0; // R
-      visualResult[offset + 1] = 0; // G
-      visualResult[offset + 2] = 0; // B
-      visualResult[offset + 3] = 0; // A
-    } else {
-      // Normalize, clamp to [0, 255] and round
-      const normalized = ((dv - minVal) / (maxVal - minVal)) * 255;
-      const r = Math.max(0, Math.min(255, Math.round(normalized)));
-
-      visualResult[offset] = r;
-      visualResult[offset + 1] = 0;
-      visualResult[offset + 2] = 0;
-      visualResult[offset + 3] = 255;
-    }
-  }
-  // Create a Uint8ClampedArray from the mapped array
-  return visualResult;
 }
 
 async function getTileData({ index, signal }: _TileLoadProps) {
@@ -98,7 +68,7 @@ async function getTileData({ index, signal }: _TileLoadProps) {
 }
 
 function App() {
-  useEffect(() => {}, []);
+  const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
 
   const layers = [
     new TileLayer({
@@ -106,7 +76,6 @@ function App() {
       // data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
 
       /* props from TileLayer class */
-
       // TilesetClass: null,
       // debounceTime: 0,
       // extent: null,
@@ -121,12 +90,15 @@ function App() {
       // onTileUnload: null,
       // onViewportLoad: null,
       // refinementStrategy: 'best-available',
+      // Any better way to do this?
+      selectedColormap,
       renderSubLayers: (props) => {
         const { imageData } = props.data;
         const { boundingBox } = props.tile;
 
-        return new BitmapLayer(props, {
+        return new NumericDataLayer(props, {
           data: undefined,
+          colormap_image: `/colormaps/${selectedColormap}.png`,
           image: {
             width: zarrReader.tileSize,
             height: zarrReader.tileSize,
@@ -157,14 +129,21 @@ function App() {
       // visible: true,
       // wrapLongitude: false,
     }),
-    new TestLayer(),
+    // new TestLayer(),
   ];
 
   return (
-    <Map initialViewState={INITIAL_VIEW_STATE} mapStyle={MAP_STYLE} minZoom={0}>
-      <DeckGLOverlay layers={layers} />
-      <NavigationControl position="top-left" />
-    </Map>
+    <>
+      <Map
+        initialViewState={INITIAL_VIEW_STATE}
+        mapStyle={MAP_STYLE}
+        minZoom={0}
+      >
+        <DeckGLOverlay layers={layers} />
+        <NavigationControl position="top-left" />
+      </Map>
+      <ColormapDropdown onChange={setSelectedColormap} />
+    </>
   );
 }
 

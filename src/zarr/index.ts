@@ -39,9 +39,9 @@ interface TileIndex {
 export default class ZarrReader {
   private root!: Location<FetchStore>;
 
-  private _varName: string;
-  private _scale: { min: number; max: number };
-  private _dtype: string;
+  private _varName!: string;
+  private _scale!: { min: number; max: number };
+  private _dtype!: string;
   private _tileSize: number = 256;
   // @TODO: hard coding for now
   private _t: number = 0;
@@ -67,7 +67,6 @@ export default class ZarrReader {
     this._dtype = arr.dtype;
     this._tileSize = arr.shape[1];
     // @TODO: This is a temporary solution getting min max out of zoom 0 data.
-    // How to get actual min/max?
     const minMax = await findMinMax(arr);
     if (minMax) {
       this._scale = {
@@ -95,6 +94,7 @@ export default class ZarrReader {
     const arr = await zarr.open.v3(this.root.resolve(`${z}/${this._varName}`), {
       kind: "array",
     });
+
     if (arr.is("number")) {
       const { data } = await arr.getChunk([this._t, y, x]);
       return data;

@@ -1,6 +1,14 @@
-import type { Array, DataType, FetchStore, Chunk } from "zarrita";
+import type {
+  Array,
+  DataType,
+  FetchStore,
+  TypedArray,
+  NumberDataType,
+} from "zarrita";
 
-// Is this really better than Math.max/min
+export const ENCODING_KEY = Math.pow(255, 2) + 255;
+
+// Native Math function can be slow when element number is more than a specific threshold
 export async function findMinMax(
   arr: Array<DataType, FetchStore>
 ): Promise<{ min: number; max: number } | undefined> {
@@ -37,4 +45,50 @@ export async function findMinMax(
     console.warn("Data is not number.");
     return;
   }
+}
+
+const RANGE = 255;
+const RANGE_SQUARED = RANGE * RANGE;
+const RANGE_TRIPLE_SQUARED = RANGE * RANGE * RANGE;
+const MAX_RANGE = RANGE_TRIPLE_SQUARED + RANGE_SQUARED + RANGE;
+
+export function encodeUsingMaximumRange(
+  encoded: number
+): [number, number, number] {
+  const r = Math.floor(encoded / RANGE_SQUARED);
+  const remainder = encoded % RANGE_SQUARED;
+  const g = Math.floor(remainder / RANGE);
+  const b = remainder % RANGE;
+  return [r, g, b];
+}
+
+// Helper function to map a single value from [minInput, maxInput] to [0, 255]
+export function numberArrayToUint8ClampedArray(
+  arr: TypedArray<NumberDataType>,
+  minVal: number,
+  maxVal: number
+) {
+  const visualResult = new Uint8ClampedArray(arr.length * 4);
+
+  for (let i = 0; i < arr.length; i++) {
+    const dv = arr[i];
+    const offset = i * 4;
+
+    if (isNaN(dv)) {
+      // nodata value
+      visualResult[offset] = 0; // R
+      visualResult[offset + 1] = 0; // G
+      visualResult[offset + 2] = 0; // B
+      visualResult[offset + 3] = 0; // A
+    } else {
+      // Normalize, clamp to [0, 255] and round
+      const normalized = ((dv - minVal) / (maxVal - minVal)) * MAX_RANGE;
+      const [r, g, b] = encodeUsingMaximumRange(normalized);
+      visualResult[offset] = r;
+      visualResult[offset + 1] = g;
+      visualResult[offset + 2] = b;
+      visualResult[offset + 3] = 255;
+    }
+  }
+  return visualResult;
 }
