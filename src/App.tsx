@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
@@ -11,7 +11,6 @@ import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
 import ZarrReader from "./zarr";
 import NumericDataLayer from "./NumericDataLayer";
-import { numberArrayToUint8ClampedArray } from "./zarr/utils";
 
 import ColormapDropdown from "./UI/Dropdown";
 
@@ -55,15 +54,13 @@ async function getTileData({ index, signal }: _TileLoadProps) {
   const { min, max } = scale;
   const chunkData = await zarrReader.getTileData(index);
   if (chunkData) {
-    const clampedData = numberArrayToUint8ClampedArray(chunkData, min, max);
-
     return {
-      imageData: new ImageData(
-        clampedData,
-        zarrReader.tileSize,
-        zarrReader.tileSize
-      ),
+      imageData: chunkData,
+      min,
+      max,
     };
+  } else {
+    throw Error("No tile data available");
   }
 }
 
@@ -93,17 +90,16 @@ function App() {
       // Any better way to do this?
       selectedColormap,
       renderSubLayers: (props) => {
-        const { imageData } = props.data;
+        const { imageData, min, max } = props.data;
         const { boundingBox } = props.tile;
 
         return new NumericDataLayer(props, {
           data: undefined,
           colormap_image: `/colormaps/${selectedColormap}.png`,
-          image: {
-            width: zarrReader.tileSize,
-            height: zarrReader.tileSize,
-            data: imageData,
-          },
+          min,
+          max,
+          tileSize: zarrReader.tileSize,
+          imageData,
           bounds: [
             boundingBox[0][0],
             boundingBox[0][1],
@@ -112,7 +108,6 @@ function App() {
           ],
         });
       },
-      // @TODO: where should I bring this data?
       tileSize: zarrReader.tileSize,
       // zRange: null,
       // zoomOffset: 0,

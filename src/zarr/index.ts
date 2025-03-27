@@ -1,30 +1,6 @@
 import * as zarr from "zarrita";
 import type { Location, FetchStore, TypedArray, NumberDataType } from "zarrita";
 import { findMinMax } from "./utils";
-
-// export async function exploreZarr() {
-//   const store = new zarr.FetchStore(BASE_URL + ZARR_STORE_NAME);
-
-//   const root = zarr.root(store);
-//   const arr = await zarr.open.v3(root.resolve(`0/${VAR_NAME}`), {
-//     kind: "array",
-//   });
-//   const group = await zarr.open.v3(root.resolve(`/`), {
-//     kind: "group",
-//   });
-//   // console.log(store);
-//   // console.log(arr);
-//   // console.log("group attrs");
-//   // console.log(group.consolidated_metadata);
-
-//   // const arr = await zarr.open.v3(store);
-//   // const chunk = await arr.getChunk([0, 0, 0]); // t, x, y
-
-//   // const arr = await zarr.open(store, { kind: "group" }); // zarr.Array<DataType, FetchStore>
-//   return arr;
-//   // console.log(chunk);
-// }
-
 interface ZarrReaderProps {
   zarrUrl: string;
   varName: string;
