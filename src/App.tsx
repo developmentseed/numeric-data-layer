@@ -38,6 +38,7 @@ const zarrReader = await ZarrReader.initialize({
   varName: VAR_NAME,
 });
 
+//@ts-expect-error ignoring for now
 function DeckGLOverlay(props) {
   const overlay = useControl(() => new DeckOverlay(props));
   overlay.setProps(props);
