@@ -27,14 +27,14 @@ const INITIAL_VIEW_STATE = {
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-const BASE_URL = "http://localhost:5173/";
+const BASE_URL = import.meta.env.ZARR_STORE_BASE_URL ?? window.location.origin;
 const ZARR_STORE_NAME =
   "20020601090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1_multiscales.zarr";
 
 const VAR_NAME = "analysed_sst";
 
 const zarrReader = await ZarrReader.initialize({
-  zarrUrl: BASE_URL + ZARR_STORE_NAME,
+  zarrUrl: `${BASE_URL}/${ZARR_STORE_NAME}`,
   varName: VAR_NAME,
 });
 
