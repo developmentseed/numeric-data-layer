@@ -1,7 +1,3 @@
-// deck.gl
-// SPDX-License-Identifier: MIT
-// Copyright (c) vis.gl contributors
-
 import { useState } from "react";
 import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
