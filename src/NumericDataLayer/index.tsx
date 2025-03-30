@@ -87,6 +87,7 @@ export class NumericDataPaintLayer extends BitmapLayer<NumericDataPaintLayerProp
       modules: [...super.getShaders().modules, numericDataUniforms],
     };
   }
+
   // @ts-expect-error no opts type available
   draw(opts) {
     const { colormap_image, min, max } = this.props;
@@ -109,17 +110,26 @@ export default class NumericDataLayer extends CompositeLayer<NumericDataLayerPro
   static layerName: string = "numeric-data-layer";
 
   initializeState(context: LayerContext): void {
-    const { tileSize } = this.props;
+    const { tileSize, textureParameters } = this.props;
     const dataTexture = context.device.createTexture({
       data: this.props.imageData,
       format: "r32float",
       width: tileSize,
       height: tileSize,
+      sampler: {
+        minFilter: "linear",
+        magFilter: "linear",
+        mipmapFilter: "linear",
+        addressModeU: "clamp-to-edge",
+        addressModeV: "clamp-to-edge",
+        ...textureParameters,
+      },
     });
     this.setState({
       dataTexture,
     });
   }
+
   renderLayers(): Layer | null | LayersList {
     return new NumericDataPaintLayer(this.props, {
       id: `${this.props.id}-data`,
