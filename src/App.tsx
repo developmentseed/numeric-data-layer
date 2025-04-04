@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
+import type { NumericDataPickingInfo } from "@deck.gl/layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
@@ -104,6 +105,7 @@ function App() {
             boundingBox[1][0],
             boundingBox[1][1],
           ],
+          pickable: true,
         });
       },
       tileSize: zarrReader.tileSize,
@@ -118,7 +120,7 @@ function App() {
       // highlightColor: [0, 0, 128, 128],
       // modelMatrix: null,
       // opacity: 1,
-      pickable: true,
+
       // visible: true,
       // wrapLongitude: false,
     }),
@@ -132,7 +134,12 @@ function App() {
         mapStyle={MAP_STYLE}
         minZoom={0}
       >
-        <DeckGLOverlay layers={layers} />
+        <DeckGLOverlay
+          layers={layers}
+          getTooltip={(info: NumericDataPickingInfo) => {
+            return info.dataValue && `${info.dataValue}`;
+          }}
+        />
         <NavigationControl position="top-left" />
       </Map>
       <ColormapDropdown onChange={setSelectedColormap} />

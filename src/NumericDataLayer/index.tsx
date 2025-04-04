@@ -5,9 +5,12 @@ import {
   Layer,
   LayersList,
   LayerContext,
+  Attribute,
+  GetPickingInfoParams,
 } from "deck.gl";
+import type { BitmapLayerPickingInfo } from "@deck.gl/layers";
 
-import type { TypedArray, NumberDataType } from "zarrita";
+import type { TypedArray, NumberDataType, Float32 } from "zarrita";
 import type { Texture } from "@luma.gl/core";
 import type { ShaderModule } from "@luma.gl/shadertools";
 
@@ -58,6 +61,10 @@ interface NumericDataPaintLayerProps extends BitmapLayerProps {
 interface NumericDataLayerProps extends NumericDataPaintLayerProps {
   imageData: TypedArray<NumberDataType>;
 }
+
+export type NumericDataPickingInfo = BitmapLayerPickingInfo & {
+  dataValue: NumberDataType | null;
+};
 export class NumericDataPaintLayer extends BitmapLayer<NumericDataPaintLayerProps> {
   static layerName = "numeric-paint-layer";
   static defaultProps = defaultProps;
@@ -75,6 +82,7 @@ export class NumericDataPaintLayer extends BitmapLayer<NumericDataPaintLayerProp
         `,
         "fs:DECKGL_FILTER_COLOR": `
           float value = color.r;
+          vec3 pickingval = vec3(value, 0., 0.);
             if (isnan(value)) {
               discard;
             } else {
@@ -128,6 +136,27 @@ export default class NumericDataLayer extends CompositeLayer<NumericDataLayerPro
     this.setState({
       dataTexture,
     });
+  }
+
+  getPickingInfo(parmas: GetPickingInfoParams): NumericDataPickingInfo {
+    const info = parmas.info as BitmapLayerPickingInfo;
+    if (info.bitmap) {
+      const [x, y] = info.bitmap.pixel;
+
+      const index = y * this.props.tileSize + x;
+      const dataValue = this.props.imageData.at(index);
+
+      return {
+        ...info,
+        // @ts-expect-error need a proper method to determine which specific numeric type to return
+        dataValue,
+      };
+    } else {
+      return {
+        ...info,
+        dataValue: null,
+      };
+    }
   }
 
   renderLayers(): Layer | null | LayersList {
