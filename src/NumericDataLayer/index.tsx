@@ -1,18 +1,21 @@
 import {
   CompositeLayer,
   BitmapLayer,
-  BitmapLayerProps,
   Layer,
   LayersList,
   LayerContext,
-  Attribute,
   GetPickingInfoParams,
 } from "deck.gl";
 import type { BitmapLayerPickingInfo } from "@deck.gl/layers";
 
-import type { TypedArray, NumberDataType, Float32 } from "zarrita";
 import type { Texture } from "@luma.gl/core";
 import type { ShaderModule } from "@luma.gl/shadertools";
+
+import type {
+  NumericDataPaintLayerProps,
+  NumericDataLayerProps,
+  NumericDataPickingInfo,
+} from "./types";
 
 const uniformBlock = `\
   uniform wozUniforms {
@@ -51,20 +54,6 @@ const defaultProps = {
   },
 };
 
-interface NumericDataPaintLayerProps extends BitmapLayerProps {
-  colormap_image: string | Texture;
-  min: number;
-  max: number;
-  tileSize: number;
-}
-
-interface NumericDataLayerProps extends NumericDataPaintLayerProps {
-  imageData: TypedArray<NumberDataType>;
-}
-
-export type NumericDataPickingInfo = BitmapLayerPickingInfo & {
-  dataValue: NumberDataType | null;
-};
 export class NumericDataPaintLayer extends BitmapLayer<NumericDataPaintLayerProps> {
   static layerName = "numeric-paint-layer";
   static defaultProps = defaultProps;
