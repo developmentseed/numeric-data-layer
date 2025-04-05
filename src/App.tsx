@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
-import type { NumericDataPickingInfo } from "@deck.gl/layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
 import ZarrReader from "./zarr";
-import NumericDataLayer from "./NumericDataLayer";
+import NumericDataLayer from "./layers/NumericDataLayer";
+import type { NumericDataPickingInfo } from "./layers/NumericDataLayer/types";
 
 import ColormapDropdown from "./UI/Dropdown";
 
@@ -124,7 +124,6 @@ function App() {
       // visible: true,
       // wrapLongitude: false,
     }),
-    // new TestLayer(),
   ];
 
   return (
