@@ -1,107 +1,15 @@
 import {
   CompositeLayer,
-  BitmapLayer,
   Layer,
   LayersList,
   LayerContext,
   GetPickingInfoParams,
 } from "deck.gl";
 import type { BitmapLayerPickingInfo } from "@deck.gl/layers";
-
 import type { Texture } from "@luma.gl/core";
-import type { ShaderModule } from "@luma.gl/shadertools";
 
-import type {
-  NumericDataPaintLayerProps,
-  NumericDataLayerProps,
-  NumericDataPickingInfo,
-} from "./types";
-
-const uniformBlock = `\
-  uniform wozUniforms {
-    float min;
-    float max;
-  } woz;
-`;
-
-export type WOZProps = {
-  min: number;
-  max: number;
-  colormap_texture: Texture;
-};
-
-const numericDataUniforms = {
-  name: "woz",
-  vs: uniformBlock,
-  fs: uniformBlock,
-  // @?: not float data?
-  uniformTypes: {
-    min: "f32",
-    max: "f32",
-  },
-} as const satisfies ShaderModule<WOZProps>;
-
-const defaultProps = {
-  ...BitmapLayer.defaultProps,
-  min: 0,
-  max: 0,
-  tileSize: 256,
-  imageData: [],
-  colormap_image: {
-    type: "image",
-    value: null,
-    async: true,
-  },
-};
-
-export class NumericDataPaintLayer extends BitmapLayer<NumericDataPaintLayerProps> {
-  static layerName = "numeric-paint-layer";
-  static defaultProps = defaultProps;
-
-  initializeState() {
-    super.initializeState();
-  }
-
-  getShaders() {
-    return {
-      ...super.getShaders(),
-      inject: {
-        "fs:#decl": `
-          uniform sampler2D colormap_texture; // texture is not included in ubo
-        `,
-        "fs:DECKGL_FILTER_COLOR": `
-          float value = color.r;
-          vec3 pickingval = vec3(value, 0., 0.);
-            if (isnan(value)) {
-              discard;
-            } else {
-              float normalized = (value - woz.min)/(woz.max - woz.min);
-              vec4 color_val = texture(colormap_texture, vec2(normalized, 0.));
-              color = color_val;
-            }
-          `,
-      },
-      modules: [...super.getShaders().modules, numericDataUniforms],
-    };
-  }
-
-  // @ts-expect-error no opts type available
-  draw(opts) {
-    const { colormap_image, min, max } = this.props;
-    const sModels = super.getModels();
-    if (colormap_image)
-      for (const m of sModels) {
-        m.shaderInputs.setProps({
-          woz: {
-            colormap_texture: colormap_image,
-            min,
-            max,
-          },
-        });
-      }
-    super.draw({ ...opts });
-  }
-}
+import { NumericDataPaintLayer } from "../NumericDataPaintLayer";
+import type { NumericDataLayerProps, NumericDataPickingInfo } from "./types";
 
 export default class NumericDataLayer extends CompositeLayer<NumericDataLayerProps> {
   static layerName: string = "numeric-data-layer";
