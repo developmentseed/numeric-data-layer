@@ -1,5 +1,11 @@
 import * as zarr from "zarrita";
-import type { Location, FetchStore, TypedArray, NumberDataType } from "zarrita";
+import type {
+  Attributes,
+  Location,
+  FetchStore,
+  TypedArray,
+  NumberDataType,
+} from "zarrita";
 import { findMinMax } from "./utils";
 interface ZarrReaderProps {
   zarrUrl: string;
@@ -15,12 +21,26 @@ interface TileIndex {
 export default class ZarrReader {
   private root!: Location<FetchStore>;
 
+  private _metadata!: Attributes;
   private _varName!: string;
   private _scale!: { min: number; max: number };
   private _dtype!: string;
   private _tileSize: number = 256;
   // @TODO: hard coding for now
   private _t: number = 0;
+
+  get scale() {
+    return this._scale;
+  }
+  get dtype() {
+    return this._dtype;
+  }
+  get tileSize() {
+    return this._tileSize;
+  }
+  get metadata() {
+    return this._metadata;
+  }
 
   private constructor() {}
 
@@ -30,6 +50,10 @@ export default class ZarrReader {
   }: ZarrReaderProps): Promise<ZarrReader> {
     const reader = new ZarrReader();
     reader.root = zarr.root(new zarr.FetchStore(zarrUrl));
+    const group = await zarr.open.v3(reader.root.resolve(`/`), {
+      kind: "group",
+    });
+    reader._metadata = group.attrs;
     await reader.setVariable(varName);
     return reader;
   }
@@ -50,16 +74,6 @@ export default class ZarrReader {
         min: minMax.min,
       };
     }
-  }
-
-  get scale() {
-    return this._scale;
-  }
-  get dtype() {
-    return this._dtype;
-  }
-  get tileSize() {
-    return this._tileSize;
   }
 
   async getTileData({

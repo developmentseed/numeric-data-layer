@@ -4,12 +4,14 @@ import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
+import { Box } from "@chakra-ui/react";
 
 import ZarrReader from "./zarr";
-import NumericDataLayer from "./layers/NumericDataLayer";
-import type { NumericDataPickingInfo } from "./layers/NumericDataLayer/types";
-
-import ColormapDropdown from "./UI/Dropdown";
+import NumericDataLayer from "@/layers/NumericDataLayer";
+import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
+import Panel from "@/components/Panel";
+import Description from "@/components/Description";
+import Dropdown from "@/components/ui/Dropdown";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
@@ -65,7 +67,6 @@ async function getTileData({ index, signal }: _TileLoadProps) {
 
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
-
   const layers = [
     new TileLayer({
       id: "TileLayer",
@@ -141,7 +142,10 @@ function App() {
         />
         <NavigationControl position="top-left" />
       </Map>
-      <ColormapDropdown onChange={setSelectedColormap} />
+      <Panel>
+        <Description info={zarrReader.metadata} />
+        <Dropdown onChange={setSelectedColormap} />
+      </Panel>
     </>
   );
 }
