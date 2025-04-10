@@ -1,8 +1,13 @@
+import type { ReactNode } from "react";
 import { Box, Stack } from "@chakra-ui/react";
 
 export const baseZIndex = 1000;
 
-export default function UIBox({ children }) {
+type UIPanelProps = {
+  children: ReactNode[];
+};
+
+export default function UIPanel({ children }: UIPanelProps) {
   return (
     <Box
       background="lightgray"

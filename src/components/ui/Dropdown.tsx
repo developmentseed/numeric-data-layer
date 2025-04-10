@@ -1,12 +1,12 @@
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
 import { Portal, Select, createListCollection } from "@chakra-ui/react";
 
 import { baseZIndex } from "../Panel";
 
-interface Option {
+type Option = {
   value: string;
   label: string;
-}
+};
 
 interface DropdownProps {
   onChange: (colormapName: string) => void;
@@ -14,21 +14,23 @@ interface DropdownProps {
   defaultValue?: string;
 }
 
-const colorMaps = createListCollection({
-  items: [
-    { label: "VIRIDIS", value: "viridis", id: "viridis" },
-    { label: "CIVIDIS", value: "cividis", id: "cividis" },
-  ],
-});
+const colormapOptions = [
+  { label: "VIRIDIS", value: "viridis" },
+  { label: "CIVIDIS", value: "cividis" },
+];
 
 const Dropdown = ({
   onChange,
-  options = colorMaps,
+  options = colormapOptions,
   defaultValue = "viridis",
 }: DropdownProps) => {
   const [selected, setSelected] = useState(defaultValue);
 
-  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+  const colorMaps = createListCollection({
+    items: options,
+  });
+
+  const handleChange = (event: Select.ValueChangeDetails<Option>) => {
     const newValue = event.value;
     setSelected(newValue[0]);
 
@@ -43,7 +45,7 @@ const Dropdown = ({
       collection={colorMaps}
       width="100%"
       value={[selected]}
-      onValueChange={(e) => handleChange(e)}
+      onValueChange={handleChange}
     >
       <Select.HiddenSelect />
       <Select.Label>Select colormap</Select.Label>
@@ -57,8 +59,8 @@ const Dropdown = ({
       </Select.Control>
       <Portal>
         <Select.Positioner>
-          <Select.Content>
-            {options.items.map((colormap) => (
+          <Select.Content color="black">
+            {colorMaps.items.map((colormap) => (
               <Select.Item item={colormap} key={colormap.value}>
                 {colormap.label}
                 <Select.ItemIndicator />
