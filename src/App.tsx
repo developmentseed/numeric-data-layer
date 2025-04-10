@@ -11,6 +11,7 @@ import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
 import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
+import RangeSlider from "@/components/ui/RangeSlider";
 import CheckBox from "@/components/ui/Checkbox";
 
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -67,7 +68,11 @@ async function getTileData({ index, signal }: _TileLoadProps) {
 
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
+  const [minMax, setMinMax] = useState<{ min: number; max: number }>(
+    zarrReader.scale
+  );
   const [showTooltip, setShowTooltip] = useState<boolean>(true);
+
   const layers = [
     new TileLayer({
       id: "TileLayer",
@@ -90,15 +95,16 @@ function App() {
       // refinementStrategy: 'best-available',
       // Any better way to do this?
       selectedColormap,
+      minMax,
       renderSubLayers: (props) => {
-        const { imageData, min, max } = props.data;
+        const { imageData } = props.data;
         const { boundingBox } = props.tile;
 
         return new NumericDataLayer(props, {
           data: undefined,
           colormap_image: `/colormaps/${selectedColormap}.png`,
-          min,
-          max,
+          min: minMax.min,
+          max: minMax.max,
           tileSize: zarrReader.tileSize,
           imageData,
           bounds: [
@@ -148,6 +154,10 @@ function App() {
       <Panel>
         <Description info={zarrReader.metadata} />
         <Dropdown onChange={setSelectedColormap} />
+        <RangeSlider
+          minMax={[zarrReader.scale.min, zarrReader.scale.max]}
+          onValueChange={setMinMax}
+        />
         <CheckBox onCheckedChange={setShowTooltip} />
       </Panel>
     </>
