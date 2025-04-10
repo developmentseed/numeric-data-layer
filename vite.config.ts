@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "url";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,6 +9,6 @@ export default defineConfig({
     target: "ES2022",
   },
   resolve: {
-    alias: [{ find: "@", replacement: path.resolve(__dirname, "src") }],
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
 });
