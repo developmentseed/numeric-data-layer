@@ -1,54 +1,28 @@
-# React + TypeScript + Vite
+# DeckGL Numeric Data Layer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[Demo with Web Optimized Zarr](https://ds-numeric-data-layer.netlify.app/)
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+DeckGL layers and helpers to visualize numeric data. The example of the numeric data can be such as Zarr V3 data containing GeoZarr compliant multiscales, numpy arrays.
 
-## Expanding the ESLint configuration
+`NumericDataLayer` is meant to be used as a subLayer of DeckGL's TileLayer. This means that input data should conform to tilesize×tilesize dimensions (e.g., 256×256, 512×512) to ensure proper rendering and optimization within the tiling system.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Running a development environment
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Clone the repo
+
+```
+git clone https://github.com/your-org/your-repo.git
+cd your-repo
+
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Run Local Dev Environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
 ```
+npm install
+npm run dev
+```
+
+The example app will then be accessible at http://localhost:5173.
