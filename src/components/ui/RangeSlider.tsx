@@ -1,15 +1,17 @@
 import { Slider } from "@chakra-ui/react";
+import type { SliderUIProps } from "./Slider";
 
-type RangeSliderUIProps = {
-  minMax: [number, number];
+type RangeSliderUIProps = SliderUIProps & {
   onValueChange: (param: { min: number; max: number }) => void;
 };
 
 export default function RangeSliderUI({
   minMax,
+  step = 20,
+  label,
   onValueChange,
 }: RangeSliderUIProps) {
-  const step = (minMax[1] - minMax[0]) / 20;
+  const oneStep = (minMax[1] - minMax[0]) / step;
 
   const handleChange = (detail: Slider.ValueChangeDetails) => {
     onValueChange({
@@ -24,10 +26,10 @@ export default function RangeSliderUI({
       defaultValue={minMax}
       max={minMax[1]}
       min={minMax[0]}
-      minStepsBetweenThumbs={step}
+      minStepsBetweenThumbs={oneStep}
       onValueChangeEnd={handleChange}
     >
-      <Slider.Label> Scale </Slider.Label>
+      <Slider.Label> {label} </Slider.Label>
       <Slider.Control>
         <Slider.Track>
           <Slider.Range />
