@@ -162,7 +162,6 @@ function App() {
         <RangeSlider
           minMax={[zarrReader.scale.min, zarrReader.scale.max]}
           label="Scale"
-          // @ts-expect-error: already fixed in the feature branch
           onValueChange={setMinMax}
         />
 
