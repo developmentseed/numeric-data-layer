@@ -12,6 +12,7 @@ import Panel from "@/components/Panel";
 import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
 import RangeSlider from "@/components/ui/RangeSlider";
+import SingleSlider from "@/components/ui/Slider";
 import CheckBox from "@/components/ui/Checkbox";
 
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -46,32 +47,33 @@ function DeckGLOverlay(props) {
   return null;
 }
 
-async function getTileData({ index, signal }: _TileLoadProps) {
-  if (signal?.aborted) {
-    console.error("Signal aborted: ", signal);
-    return null;
-  }
-  const scale = zarrReader.scale;
-
-  const { min, max } = scale;
-  const chunkData = await zarrReader.getTileData(index);
-  if (chunkData) {
-    return {
-      imageData: chunkData,
-      min,
-      max,
-    };
-  } else {
-    throw Error("No tile data available");
-  }
-}
-
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
   const [minMax, setMinMax] = useState<{ min: number; max: number }>(
     zarrReader.scale
   );
+  const [timestamp, setTimestamp] = useState<number>(0);
   const [showTooltip, setShowTooltip] = useState<boolean>(true);
+
+  async function getTileData({ index, signal }: _TileLoadProps) {
+    if (signal?.aborted) {
+      console.error("Signal aborted: ", signal);
+      return null;
+    }
+    const scale = zarrReader.scale;
+
+    const { min, max } = scale;
+    const chunkData = await zarrReader.getTileData({ ...index, timestamp });
+    if (chunkData) {
+      return {
+        imageData: chunkData,
+        min,
+        max,
+      };
+    } else {
+      throw Error("No tile data available");
+    }
+  }
 
   const layers = [
     new TileLayer({
@@ -96,6 +98,9 @@ function App() {
       // Any better way to do this?
       selectedColormap,
       minMax,
+      updateTriggers: {
+        getTileData: timestamp,
+      },
       renderSubLayers: (props) => {
         const { imageData } = props.data;
         const { boundingBox } = props.tile;
@@ -156,7 +161,15 @@ function App() {
         <Dropdown onChange={setSelectedColormap} />
         <RangeSlider
           minMax={[zarrReader.scale.min, zarrReader.scale.max]}
+          label="Scale"
           onValueChange={setMinMax}
+        />
+
+        <SingleSlider
+          minMax={[0, 2]}
+          step={1}
+          label="Timestamp"
+          onValueChange={setTimestamp}
         />
         <CheckBox onCheckedChange={setShowTooltip} />
       </Panel>
