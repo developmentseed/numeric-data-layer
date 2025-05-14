@@ -1,9 +1,10 @@
 import type { BitmapLayerProps } from "deck.gl";
 
-export interface NumericDataPaintLayerProps extends BitmapLayerProps {
+export interface NumericDataAnimationPaintLayerProps extends BitmapLayerProps {
   colormap_image: string | Texture;
   min: number;
   max: number;
-  timestamp: number;
+  step: number;
   tileSize: number;
+  imageTo: Texture;
 }

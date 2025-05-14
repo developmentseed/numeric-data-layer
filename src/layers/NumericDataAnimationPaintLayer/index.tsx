@@ -3,7 +3,7 @@ import { BitmapLayer } from "deck.gl";
 import type { Texture } from "@luma.gl/core";
 import type { ShaderModule } from "@luma.gl/shadertools";
 
-import type { NumericDataPaintLayerProps } from "./types";
+import type { NumericDataAnimationPaintLayerProps } from "./types";
 
 const uniformBlock = `\
   uniform ndUniforms {
@@ -18,7 +18,7 @@ export type NDProps = {
   max: number;
   step: number;
   colormap_texture: Texture;
-  image_end: Texture;
+  image_to: Texture;
 };
 
 const numericDataAnimationUniforms = {
@@ -38,8 +38,9 @@ const defaultProps = {
   min: 0,
   max: 0,
   tileSize: 256,
-  timestamp: 0.0,
+  step: 0.0,
   imageData: [],
+  imageTo: [],
   colormap_image: {
     type: "image",
     value: null,
@@ -47,7 +48,7 @@ const defaultProps = {
   },
 };
 
-export class NumericDataAnimationPaintLayer extends BitmapLayer<NumericDataPaintLayerProps> {
+export class NumericDataAnimationPaintLayer extends BitmapLayer<NumericDataAnimationPaintLayerProps> {
   static layerName = "numeric-paint-animation-layer";
   static defaultProps = defaultProps;
 
@@ -57,12 +58,11 @@ export class NumericDataAnimationPaintLayer extends BitmapLayer<NumericDataPaint
       inject: {
         "fs:#decl": `
           uniform sampler2D colormap_texture; // texture is not included in ubo
-          uniform sampler2D image_end; 
+          uniform sampler2D image_to; 
         `,
         "fs:DECKGL_FILTER_COLOR": `
-          
           float start_value = color.r;
-          vec4 end_image = texture(image_end, geometry.uv);
+          vec4 end_image = texture(image_to, geometry.uv);
           float end_value = end_image.r;
           float value = mix(start_value, end_value, nd.step);
             if (isnan(value)) {
@@ -80,7 +80,7 @@ export class NumericDataAnimationPaintLayer extends BitmapLayer<NumericDataPaint
 
   // @ts-expect-error no opts type available
   draw(opts) {
-    const { colormap_image, imageEnd, timestamp, min, max } = this.props;
+    const { colormap_image, imageTo, step, min, max } = this.props;
 
     const sModels = super.getModels();
     if (colormap_image)
@@ -88,8 +88,8 @@ export class NumericDataAnimationPaintLayer extends BitmapLayer<NumericDataPaint
         m.shaderInputs.setProps({
           nd: {
             colormap_texture: colormap_image,
-            image_end: imageEnd,
-            step: timestamp,
+            image_to: imageTo,
+            step,
             min,
             max,
           },
