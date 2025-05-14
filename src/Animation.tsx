@@ -5,7 +5,7 @@ import {
   useControl,
 } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
-import type { _TileLoadProps, TileIndex } from "@deck.gl/geo-layers";
+import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
@@ -45,8 +45,11 @@ const zarrReader = await ZarrReader.initialize({
   varName: VAR_NAME,
 });
 
-const timestampUnit = 1;
-const maxTimestamp = 4;
+export type TileIndex = { x: number; y: number; z: number };
+
+const TIME_UNIT = 1;
+const MAX_TIMESTAMP = 4;
+const SPEED = 0.02;
 
 const quickCache = new Map();
 
@@ -74,7 +77,7 @@ async function fetchOneTimeStamp({
   quickCache.set(keyName, chunkData);
   return chunkData;
 }
-const SPEED = 0.02;
+
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
   const [minMax, setMinMax] = useState<{ min: number; max: number }>(
@@ -83,14 +86,14 @@ function App() {
   const [timestamp, setTimestamp] = useState<number>(0.0);
   const timestampStart = Math.floor(timestamp);
   const timestampEnd = Math.min(
-    Math.floor(timestamp + timestampUnit),
-    maxTimestamp
+    Math.floor(timestamp + TIME_UNIT),
+    MAX_TIMESTAMP
   );
 
   const { isRunning, toggleAnimation } = usePausableAnimation(() => {
     // Pass on a function to the setter of the state
     // to make sure we always have the latest state
-    setTimestamp((prev) => (prev + SPEED) % maxTimestamp);
+    setTimestamp((prev) => (prev + SPEED) % MAX_TIMESTAMP);
   });
 
   async function getTileData({ index, signal }: _TileLoadProps) {
@@ -224,7 +227,7 @@ function App() {
         />
 
         <SingleSlider
-          minMax={[0, maxTimestamp]}
+          minMax={[0, MAX_TIMESTAMP]}
           step={SPEED}
           currentValue={timestamp}
           label="Timestamp"
