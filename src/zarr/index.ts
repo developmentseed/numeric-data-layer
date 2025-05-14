@@ -117,14 +117,13 @@ export default class ZarrReader {
     });
 
     if (arr.is("number")) {
-      const { data } = await arr.getChunk([timestamp, y, x]);
+      const { data } = await arr.getChunk([this._t, y, x]);
       // @TODO : remove once the data has actual timestamps
-      if (timestamp == 1) {
-        const tempArray = new Float32Array(this.tileSize * this.tileSize * 2);
+      if (timestamp % 2 == 1) {
+        const tempArray = new Float32Array(this.tileSize * this.tileSize);
         tempArray.fill(this.scale.min);
         return tempArray;
       }
-
       return data;
     } else {
       return undefined;

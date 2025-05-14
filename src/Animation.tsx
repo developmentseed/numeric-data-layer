@@ -1,23 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Map as GLMap,
   NavigationControl,
   useControl,
 } from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
-import type { _TileLoadProps } from "@deck.gl/geo-layers";
+import type { _TileLoadProps, TileIndex } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
 import ZarrReader from "./zarr";
 import NumericDataAnimationLayer from "@/layers/NumericDataAnimationLayer";
-import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
 import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
 import RangeSlider from "@/components/ui/RangeSlider";
 import SingleSlider from "@/components/ui/Slider";
-import CheckBox from "@/components/ui/Checkbox";
+import PlayButton from "@/components/ui/PlayButton";
+
+import { usePausableAnimation } from "@/components/ui/utils";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
@@ -45,7 +46,7 @@ const zarrReader = await ZarrReader.initialize({
 });
 
 const timestampUnit = 1;
-const maxTimestamp = 2;
+const maxTimestamp = 4;
 
 const quickCache = new Map();
 
@@ -56,6 +57,24 @@ function DeckGLOverlay(props) {
   return null;
 }
 
+async function fetchOneTimeStamp({
+  timestamp,
+  index,
+}: {
+  timestamp: number;
+  index: TileIndex;
+}) {
+  const { x, y, z } = index;
+  const keyName = `tile${timestamp}${x}${y}${z}`;
+  if (quickCache.get(keyName)) return quickCache.get(keyName);
+  const chunkData = await zarrReader.getTileData({
+    ...index,
+    timestamp,
+  });
+  quickCache.set(keyName, chunkData);
+  return chunkData;
+}
+const SPEED = 0.02;
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
   const [minMax, setMinMax] = useState<{ min: number; max: number }>(
@@ -67,18 +86,12 @@ function App() {
     Math.floor(timestamp + timestampUnit),
     maxTimestamp
   );
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
-  async function fetchOneTimeStamp({ timestamp, index }) {
-    const { x, y, z } = index;
-    const keyName = `tile${timestamp}${x}${y}${z}`;
-    const chunkData = await zarrReader.getTileData({
-      ...index,
-      timestamp,
-    });
-    quickCache.set(keyName, chunkData);
-    return chunkData;
-  }
+  const { isRunning, toggleAnimation } = usePausableAnimation(() => {
+    // Pass on a function to the setter of the state
+    // to make sure we always have the latest state
+    setTimestamp((prev) => (prev + SPEED) % maxTimestamp);
+  });
 
   async function getTileData({ index, signal }: _TileLoadProps) {
     if (signal?.aborted) {
@@ -89,45 +102,33 @@ function App() {
 
     const { min, max } = scale;
     const { x, y, z } = index;
-    let chunkDataStart;
-    let chunkDataEnd;
+
     const timestampKeyStart = `tile${timestampStart}${x}${y}${z}`;
     const timestampKeyEnd = `tile${timestampEnd}${x}${y}${z}`;
-    // Make it synchronous when there the value is cached
+    // Make it synchronous when there are values cached
     if (quickCache.get(timestampKeyStart) && quickCache.get(timestampKeyEnd)) {
       return {
-        imageDataStart: quickCache.get(timestampKeyStart),
-        imageDataEnd: quickCache.get(timestampKeyEnd),
+        imageDataFrom: quickCache.get(timestampKeyStart),
+        imageDataTo: quickCache.get(timestampKeyEnd),
         min,
         max,
       };
     }
 
-    const oneMoreStamp = Math.min(timestampEnd + 1, maxTimestamp);
-    await fetchOneTimeStamp({ timestamp: oneMoreStamp, index });
+    const chunkDataStart = await fetchOneTimeStamp({
+      index,
+      timestamp: timestampStart,
+    });
 
-    if (!quickCache.get(timestampKeyStart)) {
-      chunkDataStart = await fetchOneTimeStamp({
-        index,
-        timestamp: timestampStart,
-      });
-    } else {
-      chunkDataStart = quickCache.get(timestampKeyStart);
-    }
-
-    if (!quickCache.get(timestampKeyEnd)) {
-      chunkDataEnd = await fetchOneTimeStamp({
-        index,
-        timestamp: timestampEnd,
-      });
-    } else {
-      chunkDataEnd = quickCache.get(timestampKeyEnd);
-    }
+    const chunkDataEnd = await fetchOneTimeStamp({
+      index,
+      timestamp: timestampEnd,
+    });
 
     if (chunkDataStart && chunkDataEnd) {
       return {
-        imageDataStart: chunkDataStart,
-        imageDataEnd: chunkDataEnd,
+        imageDataFrom: chunkDataStart,
+        imageDataTo: chunkDataEnd,
         min,
         max,
       };
@@ -157,20 +158,20 @@ function App() {
       // onViewportLoad: null,
       // refinementStrategy: 'best-available',
       updateTriggers: {
-        getTileData: [timestampStart, timestampEnd],
+        getTileData: [timestampStart],
         renderSubLayers: [selectedColormap, minMax, timestamp],
       },
       renderSubLayers: (props) => {
-        const { imageDataStart, imageDataEnd } = props.data;
+        const { imageDataFrom, imageDataTo } = props.data;
         const { boundingBox } = props.tile;
         return new NumericDataAnimationLayer(props, {
           data: undefined,
           colormap_image: `/colormaps/${selectedColormap}.png`,
           min: minMax.min,
           max: minMax.max,
-          imageDataStart,
-          imageDataEnd,
-          timestamp: timestamp - timestampStart,
+          imageDataFrom,
+          imageDataTo,
+          step: timestamp - timestampStart,
           tileSize: zarrReader.tileSize,
           bounds: [
             boundingBox[0][0],
@@ -201,9 +202,6 @@ function App() {
 
   const deckProps = {
     layers,
-    getTooltip: (info: NumericDataPickingInfo) => {
-      return showTooltip ? info.dataValue && `${info.dataValue}` : null;
-    },
   };
 
   return (
@@ -226,11 +224,13 @@ function App() {
         />
 
         <SingleSlider
-          minMax={[0, 2]}
-          step={0.02}
+          minMax={[0, maxTimestamp]}
+          step={SPEED}
+          currentValue={timestamp}
           label="Timestamp"
           onValueChange={setTimestamp}
         />
+        <PlayButton onPlay={isRunning} onClick={toggleAnimation} />
       </Panel>
     </>
   );
