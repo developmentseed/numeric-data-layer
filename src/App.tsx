@@ -167,6 +167,7 @@ function App() {
 
         <SingleSlider
           minMax={[0, 2]}
+          currentValue={timestamp}
           step={1}
           label="Timestamp"
           onValueChange={setTimestamp}
