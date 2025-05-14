@@ -1,7 +1,10 @@
 import { Slider } from "@chakra-ui/react";
 import type { SliderUIProps } from "./Slider";
 
-type RangeSliderUIProps = SliderUIProps & {
+type RangeSliderUIProps = Omit<
+  SliderUIProps,
+  "onValueChange" | "currentValue"
+> & {
   onValueChange: (param: { min: number; max: number }) => void;
 };
 

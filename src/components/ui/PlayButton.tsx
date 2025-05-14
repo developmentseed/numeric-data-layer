@@ -1,5 +1,10 @@
 import { Button } from "@chakra-ui/react";
 
-export default function PlayButton({ onPlay, onClick }) {
+type PlayButtonProps = {
+  onPlay: boolean;
+  onClick: () => void;
+};
+
+export default function PlayButton({ onPlay, onClick }: PlayButtonProps) {
   return <Button onClick={onClick}>{onPlay ? "Pause" : "Play"}</Button>;
 }
