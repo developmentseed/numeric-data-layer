@@ -18,7 +18,7 @@ import CheckBox from "@/components/ui/Checkbox";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
 
-const INITIAL_VIEW_STATE = {
+export const INITIAL_VIEW_STATE = {
   latitude: 51.47,
   longitude: 0.45,
   zoom: 0,

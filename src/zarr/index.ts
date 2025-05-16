@@ -108,6 +108,7 @@ export default class ZarrReader {
   async getTileData({
     x,
     y,
+    z,
     timestamp,
   }: TileIndex & { timestamp: number }): Promise<
     TypedArray<NumberDataType> | undefined
