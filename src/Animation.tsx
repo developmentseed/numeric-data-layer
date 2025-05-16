@@ -1,29 +1,29 @@
 import { useState } from "react";
-import { Map, NavigationControl, useControl } from "react-map-gl/maplibre";
+import {
+  Map as GLMap,
+  NavigationControl,
+  useControl,
+} from "react-map-gl/maplibre";
 import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 
 import ZarrReader from "./zarr";
-import NumericDataLayer from "@/layers/NumericDataLayer";
-import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
+import NumericDataAnimationLayer from "@/layers/NumericDataAnimationLayer";
 import Panel from "@/components/Panel";
 import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
 import RangeSlider from "@/components/ui/RangeSlider";
 import SingleSlider from "@/components/ui/Slider";
-import CheckBox from "@/components/ui/Checkbox";
+import PlayButton from "@/components/ui/PlayButton";
+
+import { usePausableAnimation } from "@/components/ui/utils";
+
+import { INITIAL_VIEW_STATE } from "./App";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
-
-export const INITIAL_VIEW_STATE = {
-  latitude: 51.47,
-  longitude: 0.45,
-  zoom: 0,
-  maxZoom: 20,
-};
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -40,6 +40,14 @@ const zarrReader = await ZarrReader.initialize({
   varName: VAR_NAME,
 });
 
+export type TileIndex = { x: number; y: number; z: number };
+
+const TIME_UNIT = 1;
+const MAX_TIMESTAMP = 4;
+const SPEED = 0.02;
+
+const quickCache = new Map();
+
 //@ts-expect-error ignoring for now
 function DeckGLOverlay(props) {
   const overlay = useControl(() => new DeckOverlay(props));
@@ -47,13 +55,41 @@ function DeckGLOverlay(props) {
   return null;
 }
 
+async function fetchOneTimeStamp({
+  timestamp,
+  index,
+}: {
+  timestamp: number;
+  index: TileIndex;
+}) {
+  const { x, y, z } = index;
+  const keyName = `tile${timestamp}${x}${y}${z}`;
+  if (quickCache.get(keyName)) return quickCache.get(keyName);
+  const chunkData = await zarrReader.getTileData({
+    ...index,
+    timestamp,
+  });
+  quickCache.set(keyName, chunkData);
+  return chunkData;
+}
+
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
   const [minMax, setMinMax] = useState<{ min: number; max: number }>(
     zarrReader.scale
   );
-  const [timestamp, setTimestamp] = useState<number>(0);
-  const [showTooltip, setShowTooltip] = useState<boolean>(true);
+  const [timestamp, setTimestamp] = useState<number>(0.0);
+  const timestampStart = Math.floor(timestamp);
+  const timestampEnd = Math.min(
+    Math.floor(timestamp + TIME_UNIT),
+    MAX_TIMESTAMP
+  );
+
+  const { isRunning, toggleAnimation } = usePausableAnimation(() => {
+    // Pass on a function to the setter of the state
+    // to make sure we always have the latest state
+    setTimestamp((prev) => (prev + SPEED) % MAX_TIMESTAMP);
+  });
 
   async function getTileData({ index, signal }: _TileLoadProps) {
     if (signal?.aborted) {
@@ -63,10 +99,34 @@ function App() {
     const scale = zarrReader.scale;
 
     const { min, max } = scale;
-    const chunkData = await zarrReader.getTileData({ ...index, timestamp });
-    if (chunkData) {
+    const { x, y, z } = index;
+
+    const timestampKeyStart = `tile${timestampStart}${x}${y}${z}`;
+    const timestampKeyEnd = `tile${timestampEnd}${x}${y}${z}`;
+    // Make it synchronous when there are values cached
+    if (quickCache.get(timestampKeyStart) && quickCache.get(timestampKeyEnd)) {
       return {
-        imageData: chunkData,
+        imageDataFrom: quickCache.get(timestampKeyStart),
+        imageDataTo: quickCache.get(timestampKeyEnd),
+        min,
+        max,
+      };
+    }
+
+    const chunkDataStart = await fetchOneTimeStamp({
+      index,
+      timestamp: timestampStart,
+    });
+
+    const chunkDataEnd = await fetchOneTimeStamp({
+      index,
+      timestamp: timestampEnd,
+    });
+
+    if (chunkDataStart && chunkDataEnd) {
+      return {
+        imageDataFrom: chunkDataStart,
+        imageDataTo: chunkDataEnd,
         min,
         max,
       };
@@ -95,23 +155,22 @@ function App() {
       // onTileUnload: null,
       // onViewportLoad: null,
       // refinementStrategy: 'best-available',
-      // Any better way to do this?
-      selectedColormap,
-      minMax,
       updateTriggers: {
-        getTileData: timestamp,
+        getTileData: [timestampStart],
+        renderSubLayers: [selectedColormap, minMax, timestamp],
       },
       renderSubLayers: (props) => {
-        const { imageData } = props.data;
+        const { imageDataFrom, imageDataTo } = props.data;
         const { boundingBox } = props.tile;
-
-        return new NumericDataLayer(props, {
+        return new NumericDataAnimationLayer(props, {
           data: undefined,
           colormap_image: `/colormaps/${selectedColormap}.png`,
           min: minMax.min,
           max: minMax.max,
+          imageDataFrom,
+          imageDataTo,
+          step: timestamp - timestampStart,
           tileSize: zarrReader.tileSize,
-          imageData,
           bounds: [
             boundingBox[0][0],
             boundingBox[0][1],
@@ -141,39 +200,35 @@ function App() {
 
   const deckProps = {
     layers,
-    getTooltip: (info: NumericDataPickingInfo) => {
-      return showTooltip ? info.dataValue && `${info.dataValue}` : null;
-    },
   };
 
   return (
     <>
-      <Map
+      <GLMap
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle={MAP_STYLE}
         minZoom={0}
       >
         <DeckGLOverlay {...deckProps} />
         <NavigationControl position="top-left" />
-      </Map>
+      </GLMap>
       <Panel>
         <Description info={zarrReader.metadata} />
         <Dropdown onChange={setSelectedColormap} />
         <RangeSlider
           minMax={[zarrReader.scale.min, zarrReader.scale.max]}
           label="Scale"
-          // @ts-expect-error: already fixed in the feature branch
           onValueChange={setMinMax}
         />
 
         <SingleSlider
-          minMax={[0, 2]}
+          minMax={[0, MAX_TIMESTAMP]}
+          step={SPEED}
           currentValue={timestamp}
-          step={1}
           label="Timestamp"
           onValueChange={setTimestamp}
         />
-        <CheckBox onCheckedChange={setShowTooltip} />
+        <PlayButton onPlay={isRunning} onClick={toggleAnimation} />
       </Panel>
     </>
   );
