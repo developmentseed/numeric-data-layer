@@ -22,7 +22,7 @@ const INITIAL_VIEW_STATE = {
   latitude: 51.47,
   longitude: 0.45,
   zoom: 0,
-  maxZoom: 1,
+  maxZoom: 20,
 };
 
 const MAP_STYLE =
@@ -88,8 +88,8 @@ function App() {
       // maxCacheByteSize: null,
       // maxCacheSize: null,
       // maxRequests: 6,
-      // maxZoom: 19,
-      // minZoom: 0,
+      maxZoom: zarrReader.maxZoom,
+      minZoom: zarrReader.minZoom,
       // onTileError: null,
       // onTileLoad: null,
       // onTileUnload: null,
@@ -162,6 +162,7 @@ function App() {
         <RangeSlider
           minMax={[zarrReader.scale.min, zarrReader.scale.max]}
           label="Scale"
+          // @ts-expect-error: already fixed in the feature branch
           onValueChange={setMinMax}
         />
 

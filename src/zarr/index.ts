@@ -7,16 +7,22 @@ import type {
   NumberDataType,
 } from "zarrita";
 import { findMinMax } from "./utils";
-interface ZarrReaderProps {
+type ZarrReaderProps = {
   zarrUrl: string;
   varName: string;
-}
+};
 
-interface TileIndex {
+type TileIndex = {
   x: number;
   y: number;
   z: number;
-}
+};
+
+type Multiscale = {
+  tile_matrix_set: "WebMercatorQuad";
+  resampling_method: string;
+  tile_matrix_limits: Record<string, unknown>;
+};
 
 export default class ZarrReader {
   private root!: Location<FetchStore>;
@@ -28,6 +34,7 @@ export default class ZarrReader {
   private _tileSize: number = 256;
   // @TODO: hard coding for now
   private _t: number = 0;
+  private _zooms!: { min: number; max: number };
 
   get scale() {
     return this._scale;
@@ -40,6 +47,12 @@ export default class ZarrReader {
   }
   get metadata() {
     return this._metadata;
+  }
+  get minZoom() {
+    return this._zooms.min;
+  }
+  get maxZoom() {
+    return this._zooms.max;
   }
 
   private constructor() {}
@@ -74,6 +87,22 @@ export default class ZarrReader {
         min: minMax.min,
       };
     }
+
+    const zarrMetadata = await zarr.open.v3(this.root.resolve(`${varName}`), {
+      kind: "array",
+    });
+    const multiscale = zarrMetadata.attrs.multiscales as Multiscale;
+
+    if (multiscale?.tile_matrix_limits) {
+      this._zooms = {
+        min: Math.min(
+          ...Object.keys(multiscale.tile_matrix_limits).map((e) => Number(e))
+        ),
+        max: Math.max(
+          ...Object.keys(multiscale.tile_matrix_limits).map((e) => Number(e))
+        ),
+      };
+    }
   }
 
   async getTileData({
@@ -89,12 +118,13 @@ export default class ZarrReader {
     });
 
     if (arr.is("number")) {
-      const { data } = await arr.getChunk([timestamp, y, x]);
+      const { data } = await arr.getChunk([this._t, y, x]);
       // @TODO : remove once the data has actual timestamps
-      if (timestamp == 2) {
-        return new Float32Array(this.tileSize * this.tileSize);
+      if (timestamp % 2 == 1) {
+        const tempArray = new Float32Array(this.tileSize * this.tileSize);
+        tempArray.fill(this.scale.min);
+        return tempArray;
       }
-
       return data;
     } else {
       return undefined;
