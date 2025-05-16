@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Map as GLMap,
   NavigationControl,
@@ -73,21 +73,71 @@ async function fetchOneTimeStamp({
   return chunkData;
 }
 
+// Helper function to pre-fetch the next timestamp for all visible tiles
+async function prefetchNextTimestamp(
+  currentTimestamp: number,
+  visibleTiles: TileIndex[]
+) {
+  const nextTimestamp =
+    (Math.floor(currentTimestamp + TIME_UNIT) + 1) % MAX_TIMESTAMP;
+
+  // Pre-fetch data for all visible tiles
+  for (const tile of visibleTiles) {
+    await fetchOneTimeStamp({
+      timestamp: nextTimestamp,
+      index: tile,
+    });
+  }
+}
+
+// Evict cache entries for a specific tile (when tiles are unloaded)
+function evictTileFromCache(index: TileIndex) {
+  const { x, y, z } = index;
+
+  for (let t = 0; t < MAX_TIMESTAMP; t++) {
+    const tileKey = `tile${t}${x}${y}${z}`;
+    if (quickCache.has(tileKey)) {
+      quickCache.delete(tileKey);
+    }
+  }
+}
+
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
   const [minMax, setMinMax] = useState<{ min: number; max: number }>(
     zarrReader.scale
   );
   const [timestamp, setTimestamp] = useState<number>(0.0);
+  const [visibleTiles, setVisibleTiles] = useState<TileIndex[]>([]);
+  const [lastPrefetchedTimestamp, setLastPrefetchedTimestamp] =
+    useState<number>(-1);
+
   const timestampStart = Math.floor(timestamp);
   const timestampEnd = Math.min(
     Math.floor(timestamp + TIME_UNIT),
     MAX_TIMESTAMP
   );
+  const step = timestamp - timestampStart;
+
+  // When step crosses 0.5, fetch one more timestamp
+
+  useEffect(() => {
+    const nextTimestamp =
+      (Math.floor(timestamp + TIME_UNIT) + 1) % MAX_TIMESTAMP;
+
+    // Only pre-fetch if we have visible tiles and step has crossed 0.5
+    // and we haven't pre-fetched this timestamp yet
+    if (
+      step > 0.5 &&
+      visibleTiles.length > 0 &&
+      lastPrefetchedTimestamp !== nextTimestamp
+    ) {
+      prefetchNextTimestamp(timestamp, visibleTiles);
+      setLastPrefetchedTimestamp(nextTimestamp);
+    }
+  }, [timestamp, step, visibleTiles, lastPrefetchedTimestamp]);
 
   const { isRunning, toggleAnimation } = usePausableAnimation(() => {
-    // Pass on a function to the setter of the state
-    // to make sure we always have the latest state
     setTimestamp((prev) => (prev + SPEED) % MAX_TIMESTAMP);
   });
 
@@ -100,6 +150,16 @@ function App() {
 
     const { min, max } = scale;
     const { x, y, z } = index;
+
+    // Add this tile to visible tiles if not already there
+    setVisibleTiles((prevTiles) => {
+      if (
+        !prevTiles.some((tile) => tile.x === x && tile.y === y && tile.z === z)
+      ) {
+        return [...prevTiles, { x, y, z }];
+      }
+      return prevTiles;
+    });
 
     const timestampKeyStart = `tile${timestampStart}${x}${y}${z}`;
     const timestampKeyEnd = `tile${timestampEnd}${x}${y}${z}`;
@@ -152,7 +212,15 @@ function App() {
       minZoom: zarrReader.minZoom,
       // onTileError: null,
       // onTileLoad: null,
-      // onTileUnload: null,
+      onTileUnload: (tile) => {
+        // Remove unloaded tiles from the visibleTiles array
+        const { x, y, z } = tile.index;
+        // Also get rid of them from cache
+        evictTileFromCache({ x, y, z });
+        setVisibleTiles((prevTiles) =>
+          prevTiles.filter((t) => !(t.x === x && t.y === y && t.z === z))
+        );
+      },
       // onViewportLoad: null,
       // refinementStrategy: 'best-available',
       updateTriggers: {
@@ -169,7 +237,7 @@ function App() {
           max: minMax.max,
           imageDataFrom,
           imageDataTo,
-          step: timestamp - timestampStart,
+          step,
           tileSize: zarrReader.tileSize,
           bounds: [
             boundingBox[0][0],
