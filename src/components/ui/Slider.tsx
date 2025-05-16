@@ -32,6 +32,7 @@ export default function SingleSlider({
           <Slider.Range />
         </Slider.Track>
         <Slider.Thumb index={0} boxSize={6} shadow="md"></Slider.Thumb>
+        <Slider.Marks marks={[0, 1, 2]} />
       </Slider.Control>
     </Slider.Root>
   );
