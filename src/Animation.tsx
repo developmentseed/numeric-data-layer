@@ -44,7 +44,7 @@ export type TileIndex = { x: number; y: number; z: number };
 
 const TIME_UNIT = 1;
 const MAX_TIMESTAMP = 4;
-const SPEED = 0.02;
+const SPEED = 0.01;
 
 const quickCache = new Map();
 
@@ -64,7 +64,10 @@ async function fetchOneTimeStamp({
 }) {
   const { x, y, z } = index;
   const keyName = `tile${timestamp}${x}${y}${z}`;
-  if (quickCache.get(keyName)) return quickCache.get(keyName);
+
+  if (quickCache.get(keyName)) {
+    return quickCache.get(keyName);
+  }
   const chunkData = await zarrReader.getTileData({
     ...index,
     timestamp,
@@ -79,7 +82,7 @@ async function prefetchNextTimestamp(
   visibleTiles: TileIndex[]
 ) {
   const nextTimestamp =
-    (Math.floor(currentTimestamp + TIME_UNIT) + 1) % MAX_TIMESTAMP;
+    (Math.floor(currentTimestamp + TIME_UNIT) % MAX_TIMESTAMP) + 1;
 
   // Pre-fetch data for all visible tiles
   for (const tile of visibleTiles) {
