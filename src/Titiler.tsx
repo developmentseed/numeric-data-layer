@@ -53,7 +53,7 @@ function App() {
       return null;
     }
     const { z, x, y } = index;
-    //titiler.xyz
+    // using the same output from https://openlayers.org/en/latest/examples/numpytile.html
     const url = `https://titiler.xyz/cog/tiles/WebMercatorQuad/${z}/${x}/${y}@1x?format=npy&url=https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2_analytic.tif`;
     const resp = await fetch(url);
     if (!resp.ok) {
