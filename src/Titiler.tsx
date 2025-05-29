@@ -4,13 +4,13 @@ import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-
-import { parseNpy } from "./npy";
+// @ts-expect-error npy is not typed yet
+import { parseNpy } from "./utils/npy";
 import NumericDataLayer from "@/layers/NumericDataLayer";
 import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
-import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
+import type { Option } from "@/components/ui/Dropdown";
 import RangeSlider from "@/components/ui/RangeSlider";
 import CheckBox from "@/components/ui/Checkbox";
 
@@ -40,7 +40,7 @@ function App() {
     min: 3000,
     max: 18000,
   });
-  const [bandRange, setBandRange] = useState<Option[]>([
+  const [bandRange, setBandRange] = useState<Option<number>[]>([
     { value: 0, label: "0" },
   ]);
   const [selectedBand, setSelectedBand] = useState<number>(0);
@@ -59,7 +59,7 @@ function App() {
     if (!resp.ok) {
       return null;
     }
-    // @ts-expect-error npy parser not typed yet
+
     const { dtype, data, header } = parseNpy(await resp.arrayBuffer());
 
     if (bandRange !== header.shape[0])
@@ -155,14 +155,14 @@ function App() {
         <NavigationControl position="top-left" />
       </Map>
       <Panel>
-        <Description info={"info"} />
-        <Dropdown onChange={setSelectedColormap} />
+        <Dropdown<string> onChange={setSelectedColormap} />
         <RangeSlider
           minMax={[3000, 18000]}
           label="Scale"
+          // @ts-expect-error ignoring for now
           onValueChange={setMinMax}
         />
-        <Dropdown
+        <Dropdown<number>
           label="Select band "
           options={bandRange}
           defaultValue={selectedBand}
