@@ -5,14 +5,16 @@ import { BrowserRouter, Routes, Route } from "react-router";
 
 import "./index.css";
 import App from "./App.tsx";
-import Animation from "./Animation.tsx";
+// import Animation from "./Animation.tsx";
+import Titiler from "./Titiler.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <Provider value={defaultSystem}>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/animation" element={<Animation />} />
+        {/* <Route path="/animation" element={<Animation />} /> */}
+        <Route path="/titiler" element={<Titiler />} />
       </Routes>
     </BrowserRouter>
   </Provider>
