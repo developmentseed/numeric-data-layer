@@ -14,7 +14,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<App />} />
         {/* <Route path="/animation" element={<Animation />} /> */}
-        <Route path="/titiler" element={<Titiler />} />
+        <Route path="/numpy-tile" element={<Titiler />} />
       </Routes>
     </BrowserRouter>
   </Provider>
