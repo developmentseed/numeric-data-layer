@@ -120,7 +120,9 @@ export default class ZarrReader {
       const { data } = await arr.getChunk([timestamp, y, x]);
       // @TODO : remove once the data has actual timestamps
       if (timestamp == 1) {
-        return new Float32Array(this.tileSize * this.tileSize);
+        const tempArray = new Float32Array(this.tileSize * this.tileSize * 2);
+        tempArray.fill(this.scale.min);
+        return tempArray;
       }
 
       return data;
