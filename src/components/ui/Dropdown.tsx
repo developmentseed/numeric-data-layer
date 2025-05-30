@@ -3,39 +3,57 @@ import { Portal, Select, createListCollection } from "@chakra-ui/react";
 
 import { baseZIndex } from "../Panel";
 
-type Option = {
-  value: string;
+export type Option<T = string | number> = {
+  value: T;
   label: string;
 };
 
-interface DropdownProps {
-  onChange: (colormapName: string) => void;
-  options?: Option[];
-  defaultValue?: string;
+interface DropdownProps<T = string | number> {
+  label?: string;
+  onChange: (value: T) => void;
+  options?: Option<T>[];
+  defaultValue?: T;
 }
 
-const colormapOptions = [
+const colormapOptions: Option<string>[] = [
   { label: "VIRIDIS", value: "viridis" },
   { label: "CIVIDIS", value: "cividis" },
 ];
 
-const Dropdown = ({
+const Dropdown = <T extends string | number = string>({
   onChange,
-  options = colormapOptions,
-  defaultValue = "viridis",
-}: DropdownProps) => {
-  const [selected, setSelected] = useState(defaultValue);
+  label = "Select colormap",
+  options = colormapOptions as Option<T>[],
+  defaultValue,
+}: DropdownProps<T>) => {
+  // Convert the value to string for Chakra UI Select
+  const defaultStringValue =
+    defaultValue?.toString() ?? options[0]?.value?.toString() ?? "";
+  const [selected, setSelected] = useState<string>(defaultStringValue);
 
-  const colorMaps = createListCollection({
-    items: options,
+  // Create a map to convert string back to original type
+  const valueMap = new Map<string, T>();
+  options.forEach((option) => {
+    valueMap.set(option.value.toString(), option.value);
   });
 
-  const handleChange = (event: Select.ValueChangeDetails<Option>) => {
-    const newValue = event.value;
-    setSelected(newValue[0]);
+  const colorMaps = createListCollection({
+    items: options.map((option) => ({
+      label: option.label,
+      value: option.value.toString(), // Convert to string for Chakra UI
+    })),
+  });
 
-    if (onChange) {
-      onChange(newValue[0]);
+  const handleChange = (
+    event: Select.ValueChangeDetails<{ label: string; value: string }>
+  ) => {
+    const stringValue = event.value[0];
+    setSelected(stringValue);
+
+    // Convert back to original type using our map
+    const originalValue = valueMap.get(stringValue);
+    if (originalValue !== undefined && onChange) {
+      onChange(originalValue);
     }
   };
 
@@ -48,7 +66,7 @@ const Dropdown = ({
       onValueChange={handleChange}
     >
       <Select.HiddenSelect />
-      <Select.Label>Select colormap</Select.Label>
+      <Select.Label>{label}</Select.Label>
       <Select.Control>
         <Select.Trigger>
           <Select.ValueText placeholder="Select " />
@@ -61,7 +79,7 @@ const Dropdown = ({
         <Select.Positioner>
           <Select.Content color="black">
             {colorMaps.items.map((colormap) => (
-              <Select.Item item={colormap} key={colormap.value}>
+              <Select.Item item={colormap} key={colormap.label}>
                 {colormap.label}
                 <Select.ItemIndicator />
               </Select.Item>

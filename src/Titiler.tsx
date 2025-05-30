@@ -4,41 +4,28 @@ import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-
-import ZarrReader from "./zarr";
+// @ts-expect-error npy is not typed yet
+import { parseNpy } from "./utils/npy";
 import NumericDataLayer from "@/layers/NumericDataLayer";
 import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
-import Description from "@/components/Description";
 import Dropdown from "@/components/ui/Dropdown";
+import type { Option } from "@/components/ui/Dropdown";
 import RangeSlider from "@/components/ui/RangeSlider";
-import SingleSlider from "@/components/ui/Slider";
 import CheckBox from "@/components/ui/Checkbox";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./App.css";
 
 const INITIAL_VIEW_STATE = {
-  latitude: 51.47,
-  longitude: 0.45,
-  zoom: 0,
+  latitude: 1.3567,
+  longitude: 172.933,
+  zoom: 15,
   maxZoom: 20,
 };
 
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
-
-const BASE_URL = import.meta.env.VITE_ZARR_BASE_URL ?? window.location.origin;
-
-const ZARR_STORE_NAME =
-  "20020601090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1_multiscales.zarr";
-
-const VAR_NAME = "analysed_sst";
-
-const zarrReader = await ZarrReader.initialize({
-  zarrUrl: `${BASE_URL}/${ZARR_STORE_NAME}`,
-  varName: VAR_NAME,
-});
 
 //@ts-expect-error ignoring for now
 function DeckGLOverlay(props) {
@@ -49,10 +36,15 @@ function DeckGLOverlay(props) {
 
 function App() {
   const [selectedColormap, setSelectedColormap] = useState<string>("viridis");
-  const [minMax, setMinMax] = useState<{ min: number; max: number }>(
-    zarrReader.scale
-  );
-  const [timestamp, setTimestamp] = useState<number>(0);
+  const [minMax, setMinMax] = useState<{ min: number; max: number }>({
+    min: 3000,
+    max: 18000,
+  });
+  const [bandRange, setBandRange] = useState<Option<number>[]>([
+    { value: 0, label: "0" },
+  ]);
+  const [selectedBand, setSelectedBand] = useState<number>(0);
+
   const [showTooltip, setShowTooltip] = useState<boolean>(true);
 
   async function getTileData({ index, signal }: _TileLoadProps) {
@@ -60,19 +52,23 @@ function App() {
       console.error("Signal aborted: ", signal);
       return null;
     }
-    const scale = zarrReader.scale;
-
-    const { min, max } = scale;
-    const chunkData = await zarrReader.getTileData({ ...index, timestamp });
-    if (chunkData) {
-      return {
-        imageData: chunkData,
-        min,
-        max,
-      };
-    } else {
-      throw Error("No tile data available");
+    const { z, x, y } = index;
+    // using the same output from https://openlayers.org/en/latest/examples/numpytile.html
+    const url = `https://titiler.xyz/cog/tiles/WebMercatorQuad/${z}/${x}/${y}@1x?format=npy&url=https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2_analytic.tif`;
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      return null;
     }
+
+    const { dtype, data, header } = parseNpy(await resp.arrayBuffer());
+
+    if (bandRange !== header.shape[0])
+      setBandRange(
+        new Array(header.shape[0])
+          .fill(0)
+          .map((_, idx) => ({ label: idx.toString(), value: idx }))
+      );
+    return { dtype, data };
   }
 
   const layers = [
@@ -88,30 +84,31 @@ function App() {
       // maxCacheByteSize: null,
       // maxCacheSize: null,
       // maxRequests: 6,
-      maxZoom: zarrReader.maxZoom,
-      minZoom: zarrReader.minZoom,
+      maxZoom: 16,
+      minZoom: 0,
       // onTileError: null,
       // onTileLoad: null,
       // onTileUnload: null,
       // onViewportLoad: null,
       // refinementStrategy: 'best-available',
       // Any better way to do this?
-      selectedColormap,
-      minMax,
       updateTriggers: {
-        getTileData: timestamp,
+        renderSubLayers: [selectedColormap, minMax, selectedBand],
       },
       renderSubLayers: (props) => {
-        const { imageData } = props.data;
+        const { data } = props.data;
         const { boundingBox } = props.tile;
-
+        // Cast into float32 (?? integer texture)
+        const slicedData = new Float32Array(
+          data.slice(256 * 256 * selectedBand, 256 * 256 * (selectedBand + 1))
+        );
         return new NumericDataLayer(props, {
           data: undefined,
           colormap_image: `/colormaps/${selectedColormap}.png`,
           min: minMax.min,
           max: minMax.max,
-          tileSize: zarrReader.tileSize,
-          imageData,
+          tileSize: 256,
+          imageData: slicedData,
           bounds: [
             boundingBox[0][0],
             boundingBox[0][1],
@@ -121,7 +118,7 @@ function App() {
           pickable: true,
         });
       },
-      tileSize: zarrReader.tileSize,
+      tileSize: 256,
       // zRange: null,
       // zoomOffset: 0,
 
@@ -153,24 +150,23 @@ function App() {
         mapStyle={MAP_STYLE}
         minZoom={0}
       >
+        1
         <DeckGLOverlay {...deckProps} />
         <NavigationControl position="top-left" />
       </Map>
       <Panel>
-        <Description info={zarrReader.metadata} />
         <Dropdown<string> onChange={setSelectedColormap} />
         <RangeSlider
-          minMax={[zarrReader.scale.min, zarrReader.scale.max]}
+          minMax={[3000, 18000]}
           label="Scale"
           // @ts-expect-error ignoring for now
           onValueChange={setMinMax}
         />
-
-        <SingleSlider
-          minMax={[0, 2]}
-          step={1}
-          label="Timestamp"
-          onValueChange={setTimestamp}
+        <Dropdown<number>
+          label="Select band "
+          options={bandRange}
+          defaultValue={selectedBand}
+          onChange={setSelectedBand}
         />
         <CheckBox onCheckedChange={setShowTooltip} />
       </Panel>
