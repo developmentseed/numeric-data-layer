@@ -4,7 +4,7 @@ import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-
+import { COORDINATE_SYSTEM } from "deck.gl";
 import ZarrReader from "./zarr";
 import NumericDataLayer from "@/layers/NumericDataLayer";
 import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
@@ -101,6 +101,7 @@ function App() {
       updateTriggers: {
         getTileData: timestamp,
       },
+      parameters: { cullMode: 'back', depthCompare: 'always' },
       renderSubLayers: (props) => {
         const { imageData } = props.data;
         const { boundingBox } = props.tile;
@@ -119,6 +120,8 @@ function App() {
             boundingBox[1][1],
           ],
           pickable: true,
+          _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+          parameters: { cullMode: 'back', depthCompare: 'always' },
         });
       },
       tileSize: zarrReader.tileSize,
@@ -138,7 +141,6 @@ function App() {
       // wrapLongitude: false,
     }),
   ];
-
   const deckProps = {
     layers,
     getTooltip: (info: NumericDataPickingInfo) => {
@@ -149,11 +151,12 @@ function App() {
   return (
     <>
       <Map
+        projection={'globe'}
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle={MAP_STYLE}
         minZoom={0}
       >
-        <DeckGLOverlay {...deckProps} />
+        <DeckGLOverlay {...deckProps} interleaved />
         <NavigationControl position="top-left" />
       </Map>
       <Panel>
