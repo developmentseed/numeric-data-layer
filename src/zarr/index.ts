@@ -32,8 +32,6 @@ export default class ZarrReader {
   private _scale!: { min: number; max: number };
   private _dtype!: string;
   private _tileSize: number = 256;
-  // @TODO: hard coding for now
-  private _t: number = 0;
   private _zooms!: { min: number; max: number };
 
   get scale() {
@@ -118,13 +116,7 @@ export default class ZarrReader {
     });
 
     if (arr.is("number")) {
-      const { data } = await arr.getChunk([this._t, y, x]);
-      // @TODO : remove once the data has actual timestamps
-      if (timestamp % 2 == 1) {
-        const tempArray = new Float32Array(this.tileSize * this.tileSize);
-        tempArray.fill(this.scale.min);
-        return tempArray;
-      }
+      const { data } = await arr.getChunk([timestamp, y, x]);
       return data;
     } else {
       return undefined;
