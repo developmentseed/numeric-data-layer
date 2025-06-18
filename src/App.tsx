@@ -21,7 +21,7 @@ import "./App.css";
 const INITIAL_VIEW_STATE = {
   latitude: 51.47,
   longitude: 0.45,
-  zoom: 0,
+  zoom: 2,
   maxZoom: 20,
 };
 
