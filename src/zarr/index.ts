@@ -106,14 +106,16 @@ export default class ZarrReader {
   async getTileData({
     x,
     y,
-    z,
     timestamp,
   }: TileIndex & { timestamp: number }): Promise<
     TypedArray<NumberDataType> | undefined
   > {
-    const arr = await zarr.open.v3(this.root.resolve(`${z}/${this._varName}`), {
-      kind: "array",
-    });
+    const arr = await zarr.open.v3(
+      this.root.resolve(`${this._t}/${this._varName}`),
+      {
+        kind: "array",
+      }
+    );
 
     if (arr.is("number")) {
       const { data } = await arr.getChunk([timestamp, y, x]);
