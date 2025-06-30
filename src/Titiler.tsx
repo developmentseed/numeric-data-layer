@@ -159,7 +159,6 @@ function App() {
         <RangeSlider
           minMax={[3000, 18000]}
           label="Scale"
-          // @ts-expect-error ignoring for now
           onValueChange={setMinMax}
         />
         <Dropdown<number>

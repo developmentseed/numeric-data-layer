@@ -285,7 +285,7 @@ function App() {
       </GLMap>
       <Panel>
         <Description info={zarrReader.metadata} />
-        <Dropdown onChange={setSelectedColormap} />
+        <Dropdown<string> onChange={setSelectedColormap} />
         <RangeSlider
           minMax={[zarrReader.scale.min, zarrReader.scale.max]}
           label="Scale"
