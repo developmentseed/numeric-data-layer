@@ -4,9 +4,8 @@ import { TileLayer } from "@deck.gl/geo-layers";
 import type { _TileLoadProps } from "@deck.gl/geo-layers";
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-// @ts-expect-error npy is not typed yet
-import { parseNpy } from "./utils/npy";
-import NumericDataLayer from "@/layers/NumericDataLayer";
+
+import { NumericDataLayer, parseNpy }  from "@/lib/main";
 import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
 import Dropdown from "@/components/ui/Dropdown";

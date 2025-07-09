@@ -6,7 +6,7 @@ import type { _TileLoadProps } from "@deck.gl/geo-layers";
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
 import { COORDINATE_SYSTEM } from "deck.gl";
 import ZarrReader from "./zarr";
-import NumericDataLayer from "@/layers/NumericDataLayer";
+import { NumericDataLayer}  from "@/lib/main";
 import type { NumericDataPickingInfo } from "@/layers/NumericDataLayer/types";
 import Panel from "@/components/Panel";
 import Description from "@/components/Description";
