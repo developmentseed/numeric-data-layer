@@ -121,6 +121,9 @@ importers:
         specifier: ^0.5.1
         version: 0.5.2
     devDependencies:
+      '@luma.gl/shadertools':
+        specifier: ^9.1.9
+        version: 9.1.9(@luma.gl/core@9.1.9)
       '@types/node':
         specifier: ^22.0.0
         version: 22.16.5

@@ -40,6 +40,7 @@
     "zarrita": "^0.5.1"
   },
   "devDependencies": {
+    "@luma.gl/shadertools": "^9.1.9",
     "@types/node": "^22.0.0",
     "tsup": "^8.5.0",
     "typescript": "~5.7.2",
