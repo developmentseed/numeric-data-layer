@@ -33,7 +33,7 @@ importers:
   packages/examples:
     dependencies:
       '@chakra-ui/react':
-        specifier: ^3.15.1
+        specifier: ^3.22.0
         version: 3.22.0(@emotion/react@11.14.0(@types/react@19.1.8)(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@deck.gl/geo-layers':
         specifier: ^9.1.8
@@ -45,7 +45,7 @@ importers:
         specifier: ^9.1.8
         version: 9.1.13(@deck.gl/core@9.1.13)(@luma.gl/core@9.1.9)
       '@developmentseed/numeric-data-layer':
-        specifier: workspace:../numeric-data-layer
+        specifier: workspace:^0.1.0-alpha.1
         version: link:../numeric-data-layer
       '@emotion/react':
         specifier: ^11.14.0

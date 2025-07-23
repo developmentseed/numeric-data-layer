@@ -79,8 +79,9 @@ const Dropdown = <T extends string | number = string>({
         <Select.Positioner>
           <Select.Content>
             {colorMaps.items.map((colormap) => (
+              // @ts-expect-error select.item doesn't have children as prop type?!
               <Select.Item item={colormap} key={colormap.label}>
-                {colormap.label}
+                <span>{colormap.label}</span>
                 <Select.ItemIndicator />
               </Select.Item>
             ))}

@@ -7,9 +7,7 @@ const baseOptions: Options = {
   sourcemap: true,
   target: "es6",
   tsconfig: "./tsconfig.json",
-  keepNames: true,
-  cjsInterop: true,
-  splitting: true,
+  cjsInterop: true
 };
 
 export default [
@@ -18,7 +16,7 @@ export default [
     entry: ["src/index.ts"],
     outDir: "dist/esm",
     format: "esm",
-    dts: true,
+    
     onSuccess: async (): Promise<void> => {
       console.log('Build Completed.');
     }

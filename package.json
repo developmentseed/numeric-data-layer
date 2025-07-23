@@ -9,7 +9,7 @@
     "dev:examples": "pnpm --filter examples dev",
     "dev:widget": "pnpm --filter python-widget dev",
     "build:core": "pnpm --filter @developmentseed/numeric-data-layer build",
-    "build:example": "pnpm --filter examples build",
+    "build:examples": "pnpm --filter examples build",
     "build:widget": "pnpm --filter python-widget build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test"

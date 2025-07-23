@@ -34,7 +34,7 @@ export default function SingleSlider({
         <Slider.Track>
           <Slider.Range />
         </Slider.Track>
-        <Slider.Thumb index={0}></Slider.Thumb>
+        <Slider.Thumb />
         <Slider.Marks
           marks={new Array(minMax[1] - minMax[0] + 1)
             .fill(0)
