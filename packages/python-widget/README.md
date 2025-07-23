@@ -2,12 +2,6 @@
 
 A Python widget for visualizing numeric data from Zarr sources using DeckGL in Jupyter notebooks.
 
-## Installation
-
-```bash
-pip install geozarr-numeric-data-layer
-```
-
 ## Usage
 
 ```python
