@@ -45,8 +45,8 @@ importers:
         specifier: ^9.1.8
         version: 9.1.13(@deck.gl/core@9.1.13)(@luma.gl/core@9.1.9)
       '@developmentseed/numeric-data-layer':
-        specifier: 0.1.0-alpha.1
-        version: 0.1.0-alpha.1(374d36c09f13d895291ffc353bd4c4f9)
+        specifier: workspace:*
+        version: link:../numeric-data-layer
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.1.8)(react@19.1.0)
@@ -437,15 +437,6 @@ packages:
     resolution: {integrity: sha512-6nriLKNzXovWrm4Lj9MAdYf2W9/bSwJ1Rlq4jc8WvrOr1wtIJ7j6NdHlfGUs2Vv1PLt72M0jSqMwHQQevLvsqQ==}
     peerDependencies:
       '@deck.gl/core': ^9.1.0
-
-  '@developmentseed/numeric-data-layer@0.1.0-alpha.1':
-    resolution: {integrity: sha512-rrvLR5laJe51zIstjSx+o65u02bR0wV4DleMPckS7b+D30Gn3eHpiErGw8LrEpiExoP9KmBWP1Zga1U7R5i0rw==}
-    peerDependencies:
-      '@deck.gl/core': ^9.1.8
-      '@deck.gl/geo-layers': ^9.1.8
-      '@deck.gl/layers': ^9.1.8
-      '@luma.gl/core': ^9.1.0
-      deck.gl: ^9.1.8
 
   '@emotion/babel-plugin@11.13.5':
     resolution: {integrity: sha512-pxHCpT2ex+0q+HH91/zsdHkw/lXd468DIN2zvfvLtPKLLMo6gQj7oLObq8PhkrxOZb/gGCq03S3Z7PDhS8pduQ==}
@@ -3737,15 +3728,6 @@ snapshots:
     dependencies:
       '@deck.gl/core': 9.1.13
       preact: 10.26.9
-
-  '@developmentseed/numeric-data-layer@0.1.0-alpha.1(374d36c09f13d895291ffc353bd4c4f9)':
-    dependencies:
-      '@deck.gl/core': 9.1.13
-      '@deck.gl/geo-layers': 9.1.13(@deck.gl/core@9.1.13)(@deck.gl/extensions@9.1.13(@deck.gl/core@9.1.13)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9))))(@deck.gl/layers@9.1.13(@deck.gl/core@9.1.13)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9))))(@deck.gl/mesh-layers@9.1.13(@deck.gl/core@9.1.13)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9))))(@loaders.gl/core@4.3.4)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9)))
-      '@deck.gl/layers': 9.1.13(@deck.gl/core@9.1.13)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9)))
-      '@luma.gl/core': 9.1.9
-      deck.gl: 9.1.13(@arcgis/core@4.33.10)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9))(@luma.gl/webgl@9.1.9(@luma.gl/core@9.1.9))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      zarrita: 0.5.2
 
   '@emotion/babel-plugin@11.13.5':
     dependencies:
