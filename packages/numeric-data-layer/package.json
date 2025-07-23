@@ -1,0 +1,49 @@
+{
+  "name": "@developmentseed/numeric-data-layer",
+  "version": "0.1.0-alpha.1",
+  "description": "DeckGL layers and utilities for visualizing numeric data",
+  "type": "module",
+  "main": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/esm/*"
+  ],
+  "scripts": {
+    "build": "tsc -b && tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest"
+  },
+  "keywords": [
+    "deckgl",
+    "zarr",
+    "geospatial",
+    "visualization",
+    "webgl"
+  ],
+  "author": "Development Seed",
+  "license": "MIT",
+  "peerDependencies": {
+    "@deck.gl/core": "^9.1.8",
+    "@deck.gl/geo-layers": "^9.1.8",
+    "@deck.gl/layers": "^9.1.8",
+    "@luma.gl/core": "^9.1.0",
+    "deck.gl": "^9.1.8"
+  },
+  "dependencies": {
+    "zarrita": "^0.5.1"
+  },
+  "devDependencies": {
+    "@luma.gl/shadertools": "^9.1.9",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "~5.7.2",
+    "vitest": "^3.0.9"
+  }
+}

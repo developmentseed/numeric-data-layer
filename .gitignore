@@ -23,4 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 
-public/*.zarr/
+*.zarr
+
+## Python widget 
+
+.venv
+dist
+.DS_Store
+
+# Python
+__pycache__
+.ipynb_checkpoints
+
+**/*/static
