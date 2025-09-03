@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "numeric_data_layer_widget"
+version = "0.0.0"
+dependencies = ["anywidget", "traitlets"]
+readme = "README.md"
+
+# For projects not using `uv`, you can install these development dependencies with:
+# `pip install -e ".[dev]"`
+# If you're using `uv` for development, feel free to remove this section.
+[project.optional-dependencies]
+dev = ["watchfiles", "jupyterlab"]
+
+# Dependency groups (recognized by `uv`). For more details, visit:
+# https://peps.python.org/pep-0735/
+[dependency-groups]
+dev = [
+    "watchfiles",
+ "jupyterlab",
+ "ipykernel>=6.29.5",
+]
+
+
+[tool.hatch.build]
+only-packages = true
+artifacts = ["./src/numeric_data_layer_widget/static/*"]
+
+[tool.hatch.build.hooks.jupyter-builder]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = ["./src/numeric_data_layer_widget/static/widget.js"]
+skip-if-exists = ["./src/numeric_data_layer_widget/static/widget.js"]
+dependencies = ["hatch-jupyter-builder>=0.5.0"]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = "npm"
+build_cmd = "build"
