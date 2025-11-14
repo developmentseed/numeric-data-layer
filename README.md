@@ -28,8 +28,8 @@ The packages included in this repo are
 
 1. **Clone the Repository**
   ```bash
-  git clone https://github.com/developmentseed/geozarr-numeric-data-layer.git
-  cd geozarr-numeric-data-layer
+  git clone git@github.com:developmentseed/numeric-data-layer.git
+  cd numeric-data-layer
   ```
 
 2. **Install dependencies**
